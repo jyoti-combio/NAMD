@@ -1,0 +1,134 @@
+**********************************************
+NAMD PROTEIN SIMULATION
+**********************************************
+
+PSF file: Protein structure file is created from PDB and topology file to assign coordinates to positions of all atoms in the system.
+*created with extension "psfgen"
+
+Topology file: information of all internal coordinated for atoms including hydrogens. 
+*file:"top_all_36_pto.rtf"
+
+Parameter file: contains all forces and energy parameters for a set of atoms. 
+*file: "par_all36m_prot.prm
+
+Configuration file: all simulation conditions (like .mdp file in gromacs)
+
+Job script: command to run NAMD
+"..namd/namd2.exe sim1000.conf > sim1000.log &
+
+***********************************************
+Clean PDB file
+***********************************************
+##open Tk console
+
+mol new protein.pdb 
+
+set prot [atomselect top "all and protein"]
+
+$prot writepdb 1ubq_clean.pdb
+
+mol new 1ubq_clean.pdb
+
+***********************************************
+Creating pdb and psf files for simulation
+***********************************************
+creat a tcl script file, psfGen_prot.tcl 
+
+*tcl scrip
+
+#calls psfgen 
+package require psfgen
+
+#loads the topology files you wish to use 
+topology top_all36_prot.rtf
+
+pdbalias residue HIS HSE
+pdbalias atom ILE CD1 CD
+segment U {pdb 1ubq_clean.pdb}
+coordpdb 1ubq_clean.pdb U
+guesscoord
+writepdb 1ubq_set.pdb
+writepsf 1ubq_set.psf
+
+##Now soucre this tcl script. 
+
+source psfGen_prot.tcl 
+
+******************************************************************************
+Simulation system setup
+******************************************************************************
+
+Load new protein file generated in vmd as load new molecule "1ubq_set.pdb".
+Load psf file "1ubq_set.psf" into the same pdb molecule.
+
+*************
+Solvation
+*************
+
+VMD window - Extension - Modeling - Add Solvation Box
+
+Browse psf and pdb files. 
+Box size: select molecule dimension
+
+Provide box padding X Y Z both min and mx to 10
+hit Solvate!
+
+*****************************
+Adding ions (Neutralization)
+*****************************
+Add ions plugin
+
+VMD window - Extension - Modeling - Add ions
+
+Browse solvated psf and pdb files.
+selelct your options
+
+hit Autoionize!
+
+*******************************
+calculating the box dimensions
+*******************************
+Type in the Tk console. 
+
+set all [atomselect 5 "all"]   ### 5 is for the molecule number. calculate for ionized system. 
+measure center $all
+measure minmax $all
+
+values generated from minmax command. 
+expr x_min + x_max
+expr y_min + y_max 
+expr z_min + z_max
+
+now we have total distance in the x,y,z dimension. Add this to configuration file. 
+
+************************************
+configuration file setup
+************************************
+
+Edit the configuration file by providing input file names. 
+
+Edit the PBC conditions: X Y and Z vectors and the center origin.
+
+Edit parameter file name. : par_all36m_prot.prm; TIP3P_water_ions.prm
+
+
+************************************************
+Minimization and equlibration
+************************************************
+
+edit configuration file parameters. 
+
+******************************************
+Run simulation
+******************************************
+..namd/namd2.exe sim1000.conf > sim1000.log &
+
+change parameters to run equlibrium and production steps. 
+
+
+
+
+
+
+
+
