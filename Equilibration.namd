@@ -1,0 +1,140 @@
+#############################################################
+## JOB DESCRIPTION                                         ##
+#############################################################
+
+# Equilibration 
+
+#############################################################
+## ADJUSTABLE PARAMETERS                                   ##
+#############################################################
+
+#specify the location of the psf and pdb files
+structure          ionized.psf
+coordinates        ionized.pdb
+
+# continuing a run
+binCoordinates     minimize.coor  ;# coordinates from last run 
+extendedSystem	   minimize.xsc
+
+# specify the temperature here 
+set temperature    310
+set outputname     equil
+
+#starting from scratch
+temperature        $temperature
+
+#############################################################
+## SIMULATION PARAMETERS                                   ##
+#############################################################
+
+# Input
+
+# specify the parameter files location
+paraTypeCharmm	    on
+parameters          par_all36_prot.prm
+parameters          par_all36_cgenff.prm
+parameters          par_all36_lipid.prm
+parameters          par_all36_carb.prm
+parameters          lig.prm
+parameters	    TIPS3P_water_ions.prm
+
+# Force-Field Parameters
+# these parameters are usually fixed for Charmm ff
+exclude             scaled1-4
+1-4scaling          1.0
+switching           on
+
+# the next 4 parameters can be edited as per your CPU power and time
+
+# beyond cutoff electrostatics interactions aren't calculated;
+cutoff              12.0
+
+# switchdist and pairlistdist keep a track on the atoms moved
+# they basically control that the atom doesn't move 
+# arbitrarily far in one step
+switchdist          10.0
+pairlistdist        14.0
+
+# stepspercycle is the number of cycles after which namd will 
+# update the pairlistdist  
+stepspercycle       10
+
+# Integrator Parameters
+timestep            2.0
+rigidBonds          all
+nonbondedFreq       1
+vdwGeometricSigma   yes
+fullElectFrequency  2  
+pairlistsperCycle   2
+
+# Periodic Boundary Conditions
+cellBasisVector1    44.89   0.0   0.0
+cellBasisVector2     0.0  -31.79   0.0 
+cellBasisVector3     0.0    0     -22.49
+cellOrigin          22.414 -15.774 -11.314
+
+# PME (for full-system periodic electrostatics)
+PME                 yes
+PMEGridSpacing      1.0
+
+#manual grid definition
+#PMEGridSizeX        45
+#PMEGridSizeY        45
+#PMEGridSizeZ        100
+wrapAll             on
+
+# Constant Temperature Control
+langevin            on    ;# do langevin dynamics
+langevinDamping     1     ;# damping coefficient (gamma) of 1/ps
+langevinTemp        $temperature
+langevinHydrogen    off    ;# don't couple langevin bath to hydrogens
+
+# Constant Pressure Control (variable volume)
+useGroupPressure      yes ;# needed for rigidBonds
+useFlexibleCell       no
+useConstantArea       no
+
+langevinPiston        on
+langevinPistonTarget  1.01325 ;#  in bar -> 1 atm
+langevinPistonPeriod  100.0
+langevinPistonDecay   50.0
+langevinPistonTemp    $temperature
+
+
+# Fixed Atoms Constraint (set PDB beta-column to 1)
+fixedAtoms          on
+fixedAtomsFile      complex_backbone_fixed.pdb
+fixedAtomsCol       B
+
+
+# Output
+# all output files will have the same name but different extensions
+# our outputname is final_min, so
+# final_min.dcd final_min.coor etc files will be created
+
+#output
+
+outputName          $outputname
+restartfreq         10000
+dcdfreq             5000
+outputEnergies      500
+outputPressure      500
+
+# 1 step = 2 fs
+# 500 step = 1000 fs = 1 ps
+# remember : 1 step = 2 fs; 1000fs = 1ps and 1000ps = 1ns
+# remember : 1ns = 1000ps and 1ps = 1000fs
+# MD Simulations are run for 40-60 ns range
+# so steps = 40*1000*1000/2 = (time/2)*10^6 steps
+
+
+#############################################################
+## EXTRA PARAMETERS                                        ##
+#############################################################
+
+
+#############################################################
+## EXECUTION SCRIPT                                        ##
+#############################################################
+	
+run 1000000 ; #2ns

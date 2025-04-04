@@ -1,0 +1,15 @@
+set all [atomselect top all]
+set fix [atomselect top "protein and name N"] (the name of your atom can
+be HA, CA, O, C, etc., or if you want to fix; but if you want to fix the
+backbone type:
+
+set fix [atomselect top protein and backbone] )
+
+after that, you have to type the following:
+
+$all set beta 0
+$fix set beta 1
+
+And finally:
+
+$all writepdb your_molecule_with_fixed_atoms.pdb 
